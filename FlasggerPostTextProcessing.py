@@ -7,6 +7,7 @@ app = Flask(__name__)
 from flask import request
 from flasgger import Swagger, LazyString, LazyJSONEncoder
 from flasgger import swag_from
+from flask import Response
 
 
 app.json_encoder = LazyJSONEncoder
@@ -42,7 +43,7 @@ def text_processing():
     json_response = {
         'status_code': 200,
         'description': "Text yang sudah diproses",
-        'data': re.sub(r'[^a-zA-Z0-9]', '', text),
+        'data': re.sub(r'[^a-zA-Z0-9 ]', '', text),
     }
 
     response_data = jsonify(json_response)
@@ -55,23 +56,13 @@ def upload():
     # Get the uploaded file from the request
     file = request.files['file']
     
-    # Read the contents of the file into a string
-    file_contents = file.read()
+    file_text = re.sub(r'[^a-zA-Z0-9 ]', ' ', file.read().decode())
+
+    with open('modified_file.txt', 'w') as f:
+        f.write(file_text)
     
-    # Remove non-text characters from the string
-    file_contents = re.sub(r'[^a-zA-Z0-9]', '', file_contents)
-    
-    # Create a new file object in write mode
-    new_file = open('cleaned_file.txt', 'w')
-    
-    # Write the modified string to the new file object
-    new_file.write(file_contents)
-    
-    # Close both the original file object and the new file object
-    file.close()
-    new_file.close()
-    
-    return 'File successfully uploaded and cleaned!'
+
+    return Response(file_text, mimetype='text/pain')
     
 if __name__ == '__main__':
     app.run()
