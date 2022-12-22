@@ -48,7 +48,7 @@ def text_processing():
     response_data = jsonify(json_response)
     return response_data
 
-@swag_from('upload_file.yml', methods=['POST'])
+@swag_from('file_processing.yml', methods=['POST'])
 @app.route('/upload', methods=['POST'])
 def upload():
 
