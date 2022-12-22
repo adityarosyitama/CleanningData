@@ -48,15 +48,7 @@ def text_processing():
     text = request.form.get('text')
     #masukkan text
 
-    json_response = {
-        'status_code': 200,
-        'description': "Text yang sudah diproses",
-        'data': re.sub(r'[^a-zA-Z0-9 ]', '', text),
-    }
-    #menghilangkan tanda baca pada text yang diketik
-
-    response_data = jsonify(json_response)
-    return response_data
+    return text
     #memanggil text yang sudah diberikan dari tanda baca
 
 @swag_from('file_processing.yml', methods=['POST'])
@@ -66,20 +58,11 @@ def upload():
     file = request.files['file']
     #upload file
 
-    file_text = re.sub(r'[^a-zA-Z0-9 ]', ' ', file.read().decode())
+    file_text = re.sub(r'[^a-zA-Z,]', ' ', file.read().decode())
+    file_text = re.sub(r'[^a-zA-Z,]{5}', ' ', file_text)
     #menghilangkan tanda baca pada file
 
-    with open('modified_file.txt', 'w') as f:
-        f.write(file_text)
-
-    json_response = {
-        'status_code': 200,
-        'description': "Text yang sudah diproses",
-        'data': file_text,
-    }
-
-    response_data = jsonify(json_response)
-    return response_data
+    return file_text
     #memanggil text yang sudah diberikan dari tanda baca pada kolom response
 
 if __name__ == '__main__':
