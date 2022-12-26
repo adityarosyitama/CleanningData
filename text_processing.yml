@@ -1,18 +1,19 @@
-tags:
-  - name: Text Processing Convert
 #nama endpoint  
+tags:
+  - name: Text Processing
 
+#deskripsi dari endpoint
 get:
   description: Teks yang akan diproses
-#deskripsi dari endpoint
 
+#parameter dari endpoint
 parameters:
   - name: text
     in: formData
     required: true
     type: string
-#parameter dari endpoint
 
+#response dari endpoint
 responses:
   '200':
     description: Successful responses
@@ -20,4 +21,3 @@ responses:
     description: Bad Request
   '500':
     description: Internal Server Error
-#response dari endpoint
