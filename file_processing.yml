@@ -1,19 +1,23 @@
+#nama endpoint 
 tags:
-  - name: Text Processing Upload
-#nama endpoint  
+  - name: File Processing
 
+#deskripsi dari endpoint 
 get:
   description: Teks yang akan diproses
-#deskripsi dari endpoint
 
+#parameter dari endpoint
+summmary: Upload a CSV file
+consumes:
+  - text/csv
 parameters:
   - in: formData
     name: file
     type: file
     required: true
     description: The file to upload
-#parameter dari endpoint
 
+#response dari endpoint
 responses:
   '200':
     description: Successful responses
@@ -21,4 +25,3 @@ responses:
     description: Bad Request
   '500':
     description: Internal Server Error
-#response dari endpoint
