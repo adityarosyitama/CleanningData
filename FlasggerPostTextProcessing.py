@@ -1,18 +1,24 @@
-import re
 #import file
+import re
+import pandas as pd
+import csv
+import flask_swagger
+import sqlite3
+import string
 
-from flask import Flask, jsonify
 #file akan diolah dengan flask
+from flask import Flask, jsonify
 
-app = Flask(__name__)
 #memanggil flask dengan command
+app = Flask(__name__)
 
-from flask import request
-from flasgger import Swagger, LazyString, LazyJSONEncoder
-from flasgger import swag_from
-from flask import Response
 #memanggil library
+from flask import request, Response, make_response, send_file
+from flasgger import Swagger, LazyString, LazyJSONEncoder,swag_from
+from flask_swagger import swagger
+from pandas import DataFrame
 
+#title, version dan description dari dokumentasi API
 app.json_encoder = LazyJSONEncoder
 swagger_template = dict (
 info = {
@@ -22,8 +28,8 @@ info = {
         },
         host = LazyString(lambda: request.host)
 )
-#title, version dan description dari dokumentasi API
 
+#configuration dari swagger
 swagger_config = {
     "headers": [],
     "specs": [
@@ -39,31 +45,71 @@ swagger_config = {
 
 swagger = Swagger(app, template=swagger_template, 
                     config=swagger_config)
-#configuration dari swagger
 
 @swag_from('text_processing.yml', methods=['POST'])
-@app.route('/text-processing', methods=['POST'])
+@app.route('/Text Processing', methods=['POST'])
 def text_processing():
 
-    text = request.form.get('text')
     #masukkan text
+    text = request.form.get('text')
+    
+    #membersihkan text
+    text: re.sub(r'[^a-zA-Z]', ' ', text)
 
-    return text
     #memanggil text yang sudah diberikan dari tanda baca
+    return text
 
 @swag_from('file_processing.yml', methods=['POST'])
-@app.route('/upload', methods=['POST'])
+@app.route('/File Processing', methods=['POST'])
 def upload():
-
     file = request.files['file']
-    #upload file
+    df = pd.read_csv(file)
+    df = df.dropna()
+    df['Tweet'] = df['Tweet'].str.replace(r'[^\w\s]','')
+    df['Tweet'] = df['Tweet'].str.replace("\d", ' ')
+    df['Tweet'] = df['Tweet'].apply(lambda x: ' '.join([word for word in x.split() if len(word) >= 5]))
+    df['Tweet'] = df['Tweet'].str.replace('  ', ' ')  
 
-    file_text = re.sub(r'[^a-zA-Z,]', ' ', file.read().decode())
-    file_text = re.sub(r'[^a-zA-Z,]{5}', ' ', file_text)
-    #menghilangkan tanda baca pada file
+    csv = df.to_csv(index=False)
 
-    return file_text
-    #memanggil text yang sudah diberikan dari tanda baca pada kolom response
+    # Create a Flask response object
+    response = make_response(csv)
 
+    # Set the content type to CSV
+    response.headers['Content-Type'] = 'text/csv'
+
+    # Set the response headers to include the file name
+    response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
+
+    return response
+
+@swag_from('upload_sqlite.yml', methods=['POST'])
+@app.route('/Upload SQLITE', methods=['POST'])
+def uploadsqlite():
+
+    # Connect to the database
+    conn = sqlite3.connect('my_database.db')
+    cursor = conn.cursor()
+    
+    # Get the uploaded file
+    file = request.files['file']
+    
+    # Check if the file is a CSV
+    if file.filename.split('.')[-1] != 'csv':
+        return 'File is not a CSV'
+    
+    # Parse the CSV file
+    csv_reader = csv.reader(file)
+    
+    # Insert each row into the database
+    for row in csv_reader:
+        cursor.execute("INSERT INTO my_table (col1, col2, col3) VALUES (?, ?, ?)", row)
+    
+    # Commit the changes and close the connection
+    conn.commit()
+    conn.close()
+    
+    return 'CSV file successfully inserted into the database'
+   
 if __name__ == '__main__':
     app.run()
